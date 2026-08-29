@@ -1,13 +1,6 @@
 import streamlit as st
 from src.pipelines.pipeline import run_research_pipeline
 
-# Run on cuda 
-import torch
-
-device = "cuda" if torch.cuda.is_available() else "cpu"
-
-print(device)
-
 # ==========================================
 # Page Configuration
 # ==========================================
