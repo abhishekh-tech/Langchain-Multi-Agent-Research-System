@@ -1,7 +1,4 @@
-from src.tools.tools import web_search,scrape_url
+from src.pipelines.pipeline import run_research_pipeline
 
-# output = web_search("Latest news on AI research")
-# print(output)
-
-r = web_search.invoke("What is the latest news on nepal-tibet flood? ")
-print(r)
+topic = "The latest update on nepal-tibet flood"
+run_research_pipeline(topic)
