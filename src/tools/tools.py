@@ -12,17 +12,39 @@ import re
 load_dotenv()
 
 tavily = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
+MAX_SCRAPED_CHARS = 6000
+
+def _limit_scraped_content(text: str) -> str:
+    text = text.strip()
+    if len(text) <= MAX_SCRAPED_CHARS:
+        return text
+    return text[:MAX_SCRAPED_CHARS] + "\n\n[Content truncated]"
+
+def _extract_with_tavily(url: str) -> str:
+    extracted = tavily.extract(urls=[url])
+    results = extracted.get("results", [])
+
+    if results and results[0].get("raw_content"):
+        return _limit_scraped_content(results[0]["raw_content"])
+
+    return ""
 
 @tool
 def web_search(query: str) -> str:
-    """Search the web for recent and reliable information on a topic. Returns Titles, URLs and Content"""
-    results = tavily.search(query=query,max_results=5)
+    """Search the web for recent and reliable information."""
+
+    results = tavily.search(
+        query=query,
+        max_results=3
+    )
 
     out = []
 
-    for r in results['results']:
+    for r in results["results"]:
         out.append(
-            f"Title: {r['title']}\nURL: {r['url']}\nSnippet: {r['content'][:300]}\n"
+            f"Title: {r['title']}\n"
+            f"URL: {r['url']}\n"
+            f"Snippet: {r['content'][:150]}\n"
         )
 
     return "\n---\n".join(out)
@@ -48,6 +70,11 @@ def scrape_url(url: str) -> str:
             }
         )
 
+        if response.status_code == 403:
+            extracted_text = _extract_with_tavily(url)
+            if extracted_text:
+                return extracted_text
+
         response.raise_for_status()
 
         html = response.text
@@ -63,7 +90,7 @@ def scrape_url(url: str) -> str:
         )
 
         if text:
-            return text.strip()
+            return _limit_scraped_content(text)
 
         # --------------------------------
         # 2. Fallback: Readability
@@ -79,7 +106,7 @@ def scrape_url(url: str) -> str:
         )
 
         if text:
-            return text
+            return _limit_scraped_content(text)
 
         # --------------------------------
         # 3. Final fallback: BeautifulSoup
@@ -102,7 +129,7 @@ def scrape_url(url: str) -> str:
             strip=True
         )
 
-        return text
+        return _limit_scraped_content(text)
 
     except requests.exceptions.RequestException as e:
         return f"Error fetching URL: {e}"

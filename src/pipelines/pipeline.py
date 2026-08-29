@@ -1,5 +1,22 @@
 from src.agents.agents import build_search_agent, build_reader_agent, writer_chain, critic_chain
 
+def _get_scraped_content(reader_result: dict) -> str:
+    messages = reader_result.get("messages", [])
+
+    for message in reversed(messages):
+        if (
+            getattr(message, "type", None) == "tool"
+            and getattr(message, "name", None) == "scrape_url"
+            and message.content
+        ):
+            return message.content
+
+    for message in reversed(messages):
+        if message.content:
+            return message.content
+
+    return "No scraped content was returned by the reader agent."
+
 def run_research_pipeline(topic : str) -> dict:
 
     state = {}
@@ -32,8 +49,8 @@ def run_research_pipeline(topic : str) -> dict:
         )]
     })
 
-    state["scraped_content"] = reader_result['messages'][-1].content
-    print("\n Scraped content ",state['scraped_content']) 
+    state["scraped_content"] = _get_scraped_content(reader_result)
+    print("\n Scraped content\n", state["scraped_content"])
 
     # writer chain
     print("\n"+" ="*50)

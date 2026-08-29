@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Model Initialization
-llm = ChatGroq(model="qwen/qwen3.8-27b", temperature=0,max_tokens=1000)
+llm = ChatGroq(model="qwen/qwen3.6-27b", temperature=0,max_tokens=1000)
 
 # 1st Agent : Search Agent
 def build_search_agent():
@@ -22,6 +22,13 @@ def build_reader_agent():
     return create_agent(
         model=llm,
         tools=[scrape_url],
+        system_prompt=(
+            "You are a web research reader. Select a relevant URL from the supplied "
+            "search results and use scrape_url to read it. If a URL returns a 403, "
+            "404, timeout, or another fetch error, do not report that error as the "
+            "final result; try another relevant URL from the search results instead. "
+            "Return the successfully scraped content and its source URL."
+        ),
     )
 
 # writer chain

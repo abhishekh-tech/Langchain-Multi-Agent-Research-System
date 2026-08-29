@@ -1,4 +1,4 @@
 from src.pipelines.pipeline import run_research_pipeline
 
-topic = "The latest update on nepal-tibet flood"
+topic = "What is the impact of social media on Youth?"
 run_research_pipeline(topic)
